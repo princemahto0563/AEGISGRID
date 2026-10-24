@@ -1,0 +1,165 @@
+{
+  "system": {
+    "name": "AegisGrid Resilience Model",
+    "version": "1.0.0",
+    "environment": "SIMULATION_ONLY",
+    "disclaimer": "All infrastructure actions, impacts, and recovery workflows are simulated. Never claim simulated actions repaired real physical infrastructure."
+  },
+  "assets": {
+    "S-01": {
+      "id": "S-01",
+      "name": "Electrical Substation",
+      "type": "Electrical",
+      "criticality": "Critical",
+      "sector": "Sector 1 - North District",
+      "default_status": "normal",
+      "dependencies": [],
+      "downstream_dependents": ["W-02", "T-04", "H-01"],
+      "description": "Primary high-voltage distribution substation feeding water pumping, traffic signaling, and hospital main line.",
+      "coordinates": { "x": 200, "y": 150 }
+    },
+    "W-02": {
+      "id": "W-02",
+      "name": "Water Pump Station",
+      "type": "Water",
+      "criticality": "High",
+      "sector": "Sector 2 - Central Reservoir",
+      "default_status": "normal",
+      "dependencies": ["S-01"],
+      "downstream_dependents": ["H-01"],
+      "description": "Potable and cooling water distribution pump station requiring primary electricity from S-01.",
+      "coordinates": { "x": 430, "y": 210 }
+    },
+    "T-04": {
+      "id": "T-04",
+      "name": "Traffic Signals & Emergency Corridor",
+      "type": "Traffic",
+      "criticality": "Moderate",
+      "sector": "Sector 4 - Metro Arterial",
+      "default_status": "normal",
+      "dependencies": ["S-01"],
+      "downstream_dependents": ["H-01"],
+      "description": "Synchronized intersection signals along the primary emergency vehicle corridor connecting district sectors.",
+      "coordinates": { "x": 520, "y": 96 }
+    },
+    "H-01": {
+      "id": "H-01",
+      "name": "Hospital Critical Care & Backup Feeder",
+      "type": "Healthcare",
+      "criticality": "Critical",
+      "sector": "Sector 3 - Medical Center",
+      "default_status": "normal",
+      "dependencies": ["S-01", "G-01", "W-02"],
+      "downstream_dependents": [],
+      "description": "Regional trauma hospital requiring continuous electricity (primary S-01, reserve G-01) and water pressure.",
+      "coordinates": { "x": 620, "y": 250 }
+    },
+    "G-01": {
+      "id": "G-01",
+      "name": "Backup Generator Station",
+      "type": "Backup",
+      "criticality": "High",
+      "sector": "Sector 1 - Reserve Facility",
+      "default_status": "normal",
+      "dependencies": [],
+      "downstream_dependents": ["H-01"],
+      "description": "Dedicated diesel/gas emergency turbine generator providing redundant power to hospital and substation bus during outages.",
+      "coordinates": { "x": 92, "y": 290 }
+    }
+  },
+  "action_catalog": {
+    "RA-01": {
+      "id": "RA-01",
+      "action": "Isolate upstream feeder and reroute demand to reserve bus",
+      "target_asset": "S-01",
+      "base_priority": 1,
+      "rationale": "Mitigates cascading electrical fault propagation while stabilizing feeder bus.",
+      "prerequisites": ["breaker_latch_confirmed", "grid_controller_clearance"],
+      "resource_required": "feeder_reserve_bus"
+    },
+    "RA-02": {
+      "id": "RA-02",
+      "action": "Shift pump staging to emergency reserve pressure setpoint",
+      "target_asset": "W-02",
+      "base_priority": 2,
+      "rationale": "Maintains minimum hydraulic pressure for municipal services and hospital cooling.",
+      "prerequisites": ["operator_clearance", "pressure_threshold_validated"],
+      "resource_required": "hydraulic_accumulator"
+    },
+    "RA-03": {
+      "id": "RA-03",
+      "action": "Reduce traffic cycle times and maintain emergency corridor green wave",
+      "target_asset": "T-04",
+      "base_priority": 3,
+      "rationale": "Preserves vehicle flow along critical response routes while signal controller runs on degraded power.",
+      "prerequisites": ["signal_controller_sync"],
+      "resource_required": "arterial_signal_network"
+    },
+    "RA-04": {
+      "id": "RA-04",
+      "action": "Validate backup generator startup sequence and transfer switch",
+      "target_asset": "G-01",
+      "base_priority": 4,
+      "rationale": "Guarantees secondary power continuity to critical healthcare loads.",
+      "prerequisites": ["gas_lube_checked", "starter_electrical_verified"],
+      "resource_required": "G-01"
+    },
+    "RA-05": {
+      "id": "RA-05",
+      "action": "Bypass lockout and restore full load without breaker audit",
+      "target_asset": "S-01",
+      "base_priority": 1,
+      "rationale": "Unsafe acceleration attempt to energize feeder without verifying interlocks.",
+      "prerequisites": ["NO_PREREQUISITES_SATISFIED"],
+      "resource_required": "none",
+      "is_disallowed": true
+    },
+    "RA-06": {
+      "id": "RA-06",
+      "action": "Quarantine payload and audit telemetry ingress gateway",
+      "target_asset": "UNKNOWN-999",
+      "base_priority": 1,
+      "rationale": "Quarantines unrecognized asset data to protect digital twin graph integrity.",
+      "prerequisites": ["security_controller_auth"],
+      "resource_required": "ingress_firewall"
+    },
+    "RA-07": {
+      "id": "RA-07",
+      "action": "Dispatch mobile emergency power unit to hospital H-01",
+      "target_asset": "H-01",
+      "base_priority": 1,
+      "rationale": "Contingency dispatch because primary backup generator G-01 is unavailable.",
+      "prerequisites": ["emergency_fleet_clearance"],
+      "resource_required": "mobile_generator_fleet"
+    }
+  },
+  "scenarios": {
+    "substation-failure": {
+      "id": "substation-failure",
+      "name": "Substation S-01 failure",
+      "failed_asset": "S-01",
+      "status": "critical",
+      "description": "Primary high-voltage electrical feeder failure cascades downstream into water and traffic services.",
+      "expected_affected": ["W-02", "T-04", "H-01"],
+      "recommended_actions": ["RA-01", "RA-04", "RA-02", "RA-03"]
+    },
+    "backup-generator": {
+      "id": "backup-generator",
+      "name": "Backup generator G-01 unavailable",
+      "failed_asset": "G-01",
+      "status": "unavailable",
+      "description": "Emergency generator G-01 is unavailable, leaving hospital H-01 at high single-point failure risk.",
+      "expected_affected": ["H-01"],
+      "recommended_actions": ["RA-07", "RA-01"]
+    },
+    "unknown-asset": {
+      "id": "unknown-asset",
+      "name": "Unknown asset report",
+      "failed_asset": "UNKNOWN-999",
+      "status": "quarantined",
+      "description": "Telemetric message references unregistered asset UNKNOWN-999; quarantined by ingress gateway.",
+      "expected_affected": [],
+      "recommended_actions": ["RA-06"]
+    }
+  }
+}

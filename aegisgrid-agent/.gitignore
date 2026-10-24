@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Environment Variables
+.env
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Incident history (runtime generated state)
+incident_history.json
+
+# uAgents generated keys and state
+private_keys.json
+*_data.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

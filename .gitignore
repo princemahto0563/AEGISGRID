@@ -1,0 +1,38 @@
+cd ~/AEGISGRID
+
+cat > .gitignore <<'EOF'
+# Secrets and environment
+.env
+.env.*
+!.env.example
+private_keys.json
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Local agent data
+*_data.json
+*.db
+*.sqlite3
+
+# Frontend
+node_modules/
+dist/
+.vite/
+
+# OS and editors
+.DS_Store
+.vscode/
+.idea/
+EOFaegisgrid-agent/*_data.json
